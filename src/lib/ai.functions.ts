@@ -1,4 +1,4 @@
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { resolveAiModel } from "./ai-gateway.server";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText, Output } from "ai";
@@ -17,12 +17,8 @@ export const gradeAssignment = createServerFn({ method: "POST" })
     const { data: adminChk } = await context.supabase.rpc("is_admin");
     if (!adminChk) throw new Error("للأدمن فقط");
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("خدمة الذكاء الاصطناعي غير مهيأة");
-
-    const gateway = createLovableAiGatewayProvider(key);
     const { output } = await generateText({
-      model: gateway("google/gemini-3.6-flash"),
+      model: resolveAiModel(),
       output: Output.object({
         schema: z.object({
           score: z.number(),
@@ -48,12 +44,8 @@ export const askTutor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ChatInput.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("خدمة الذكاء الاصطناعي غير مهيأة");
-
-    const gateway = createLovableAiGatewayProvider(key);
     const { text } = await generateText({
-      model: gateway("google/gemini-3.6-flash"),
+      model: resolveAiModel(),
       system:
         "أنت 'مساعد المستر'، مدرس برمجة مصري ودود على منصة المستر للأستاذ المستر. جاوب بالعربية المصرية المبسطة، واشرح الكود خطوة بخطوة باختصار.",
       messages: data.messages,
